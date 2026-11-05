@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080d19"><title>RADAR PRO</title>
+<style>
+:root{color-scheme:dark;--bg:#080d19;--panel:#111a2b;--line:#26344c;--muted:#91a0b8;--cyan:#35d7ff;--green:#45e0a0;--gold:#ffc857}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#142543 0,#080d19 55%);color:#f4f7ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+.wrap{max-width:1100px;margin:auto;padding:22px 16px 48px}.head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#35d7ff,#536bff);display:grid;place-items:center;font-size:24px;box-shadow:0 8px 30px #35d7ff35}
+h1{font-size:24px;letter-spacing:1.5px;margin:0}.sub{color:var(--muted);font-size:12px;margin-top:3px}
+.status{border:1px solid var(--line);background:#101a2b;padding:8px 12px;border-radius:99px;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:7px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:16px}.stat,.panel{background:linear-gradient(145deg,#121e32,#0e1727);border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:0 10px 30px #0002}
+.stat .k{font-size:12px;color:var(--muted)}.stat .v{font-size:27px;font-weight:750;margin-top:5px}.cyan{color:var(--cyan)}.green{color:var(--green)}.gold{color:var(--gold)}
+.cols{display:grid;grid-template-columns:1.35fr .85fr;gap:15px}.panel h2{font-size:16px;margin:0 0 14px;display:flex;justify-content:space-between;align-items:center}
+.pill{font-size:11px;color:var(--cyan);background:#35d7ff14;border:1px solid #35d7ff35;padding:4px 8px;border-radius:99px}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--muted);font-weight:500;padding:9px 7px;border-bottom:1px solid var(--line)}td{padding:12px 7px;border-bottom:1px solid #202d42}tbody tr:last-child td{border:0}.mult{color:var(--gold);font-weight:700}.empty,.hint{color:var(--muted);text-align:center;padding:24px 8px;font-size:13px}
+.topitem{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #202d42}.topitem:last-child{border:0}.topname{font-weight:650}.topmeta{font-size:11px;color:var(--muted);margin-top:3px}
+.foot{color:#71819b;font-size:11px;text-align:center;margin-top:18px}
+@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}.cols{grid-template-columns:1fr}.stat:last-child{grid-column:span 2}.wrap{padding:17px 12px 35px}h1{font-size:21px}table{font-size:12px}th,td{padding:10px 5px}}
+</style></head>
+<body><div class="wrap">
+<header class="head"><div class="brand"><div class="logo">⌁</div><div><h1>RADAR PRO</h1><div class="sub">GLOBAL EGG FINDER · LIVE DASHBOARD</div></div></div><span class="status" id="connection"><i class="dot"></i>Conectando...</span></header>
+<section class="grid">
+<div class="stat"><div class="k">REPORTES RECIBIDOS</div><div class="v cyan" id="count">—</div></div>
+<div class="stat"><div class="k">MEJOR MULTIPLICADOR</div><div class="v gold" id="best">—</div></div>
+<div class="stat"><div class="k">ÚLTIMA ACTUALIZACIÓN</div><div class="v green" style="font-size:19px" id="updated">—</div></div></section>
+<div class="cols">
+<section class="panel"><h2>Reportes recientes <span class="pill">MÍN. 3x</span></h2><div style="overflow-x:auto"><table><thead><tr><th>HUEVO</th><th>MULT.</th><th>RAREZA</th><th>SERVIDOR</th></tr></thead><tbody id="reports"><tr><td colspan="4" class="empty">Cargando reportes...</td></tr></tbody></table></div></section>
+<section class="panel"><h2>TOP por tamaño <span class="pill">TOP 10</span></h2><div id="top"><div class="empty">Cargando ranking...</div></div></section></div>
+<section class="panel" style="margin-top:15px"><h2>Estado del radar <span class="pill">API</span></h2><div class="hint" id="note">Conectando con el servidor RADAR PRO...</div></section>
+<div class="foot">RADAR PRO · Actualización automática cada 30 segundos · Panel público de solo lectura</div>
+</div>
+<script>
+const API='https://radar-pro-4ku1.onrender.com';const $=id=>document.getElementById(id);
+function safe(v){return String(v??'—').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function load(){try{
+const [r,t,h]=await Promise.all([fetch(API+'/api/reports?min_multiplier=3&limit=50',{cache:'no-store'}),fetch(API+'/api/top?limit=10&min_multiplier=3',{cache:'no-store'}),fetch(API+'/health',{cache:'no-store'})]);
+if(!r.ok||!t.ok||!h.ok)throw Error('Error del servidor');const reports=(await r.json()).reports||[],top=(await t.json()).top||[];
+$('connection').innerHTML='<i class="dot" style="background:var(--green)"></i>API conectada';$('count').textContent=reports.length;$('best').textContent=reports.length?Math.max(...reports.map(x=>Number(x.multiplier)||0)).toLocaleString('es-MX')+'x':'—';$('updated').textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+$('reports').innerHTML=reports.length?reports.map(x=>'<tr><td><b>'+safe(x.egg_name)+'</b></td><td class="mult">'+safe(x.multiplier)+'x</td><td>'+safe(x.rarity)+'</td><td>'+safe(x.server_id)+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">Todavía no hay reportes. Aparecerán cuando un agente autorizado los envíe.</td></tr>';
+$('top').innerHTML=top.length?top.map((x,i)=>'<div class="topitem"><div><div class="topname">'+(i+1)+'. '+safe(x.egg_name)+'</div><div class="topmeta">Tamaño: '+safe(x.size)+' · '+safe(x.rarity)+'</div></div><div class="mult">'+safe(x.multiplier)+'x</div></div>').join(''):'<div class="empty">Aún no hay datos para el TOP.</div>';
+$('note').textContent='Servidor activo. Datos públicos de reportes y ranking; los agentes requieren autorización.';
+}catch(e){$('connection').innerHTML='<i class="dot" style="background:#ff647c"></i>Sin conexión';$('note').textContent='No se pudo consultar la API. El servidor debe permitir solicitudes desde esta página (CORS).';if($('reports').textContent.includes('Cargando'))$('reports').innerHTML='<tr><td colspan="4" class="empty">No se pudieron cargar los reportes.</td></tr>';if($('top').textContent.includes('Cargando'))$('top').innerHTML='<div class="empty">No se pudo cargar el TOP.</div>';}}
+load();setInterval(load,30000);
+</script></body></html>
